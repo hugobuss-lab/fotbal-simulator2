@@ -1,122 +1,154 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Fotbalový simulátor</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-    }
+    body { font-family: sans-serif; text-align: center; background: #1e7f34; margin: 0; }
     #field {
-      width: 600px;
-      height: 400px;
-      background: #4CAF50;
       margin: 20px auto;
+      width: 800px;
+      height: 500px;
+      background-color: #4CAF50;
       position: relative;
-      border: 3px solid #333;
+      border: 3px solid white;
+      border-radius: 10px;
     }
     .player {
       width: 20px;
       height: 20px;
-      background: white;
       border-radius: 50%;
       position: absolute;
       text-align: center;
-      font-size: 10px;
       line-height: 20px;
+      font-size: 12px;
+      color: white;
+      font-weight: bold;
     }
-    form {
-      margin: 20px;
+    .teamA { background-color: blue; }
+    .teamB { background-color: red; }
+    #scoreboard {
+      font-size: 24px;
+      color: white;
+      margin-top: 10px;
     }
-    input {
-      margin: 3px;
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 10px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
+  <h1 style="color:white;">⚽ Fotbalový Simulátor</h1>
+  <div id="scoreboard">0 : 0 | ⏱️ 0'</div>
+  <button onclick="startMatch()">Spustit zápas</button>
+  <div id="field"></div>
 
-<h1>Fotbalový simulátor</h1>
+  <script>
+    const field = document.getElementById("field");
+    const scoreboard = document.getElementById("scoreboard");
 
-<form id="teamForm">
-  <h2>Tým 1</h2>
-  Formace: <input type="text" id="formation1" value="4-3-3">
-  <div id="players1">
-    <input type="text" placeholder="Hráč 1" required>
-    <input type="text" placeholder="Hráč 2">
-    <input type="text" placeholder="Hráč 3">
-    <input type="text" placeholder="Hráč 4">
-    <input type="text" placeholder="Hráč 5">
-    <input type="text" placeholder="Hráč 6">
-    <input type="text" placeholder="Hráč 7">
-    <input type="text" placeholder="Hráč 8">
-    <input type="text" placeholder="Hráč 9">
-    <input type="text" placeholder="Hráč 10">
-    <input type="text" placeholder="Hráč 11">
-  </div>
+    const positions = {
+      GK: [390, 10],
+      LB: [100, 100],
+      CB1: [300, 100],
+      CB2: [500, 100],
+      RB: [700, 100],
+      CDM: [390, 170],
+      CM: [390, 250],
+      LW: [150, 330],
+      RW: [630, 330],
+      ST: [390, 400]
+    };
 
-  <h2>Tým 2</h2>
-  Formace: <input type="text" id="formation2" value="4-4-2">
-  <div id="players2">
-    <input type="text" placeholder="Hráč 1" required>
-    <input type="text" placeholder="Hráč 2">
-    <input type="text" placeholder="Hráč 3">
-    <input type="text" placeholder="Hráč 4">
-    <input type="text" placeholder="Hráč 5">
-    <input type="text" placeholder="Hráč 6">
-    <input type="text" placeholder="Hráč 7">
-    <input type="text" placeholder="Hráč 8">
-    <input type="text" placeholder="Hráč 9">
-    <input type="text" placeholder="Hráč 10">
-    <input type="text" placeholder="Hráč 11">
-  </div>
+    let players = [];
+    let scoreA = 0;
+    let scoreB = 0;
+    let minutes = 0;
+    let interval;
 
-  <br>
-  <button type="button" onclick="startMatch()">Start zápas</button>
-</form>
+    function createPlayer(name, team, [x, y]) {
+      const el = document.createElement("div");
+      el.className = `player ${team}`;
+      el.textContent = name;
+      el.style.left = x + "px";
+      el.style.top = y + "px";
+      field.appendChild(el);
+      return { el, x, y };
+    }
 
-<div id="field"></div>
+    function startMatch() {
+      field.innerHTML = ""; // clear field
+      players = [];
 
-<script>
-  const field = document.getElementById('field');
+      const teamA = [
+        ["1", "GK"],
+        ["2", "LB"], ["3", "CB1"], ["4", "CB2"], ["5", "RB"],
+        ["6", "CDM"], ["7", "CM"],
+        ["8", "LW"], ["9", "RW"], ["10", "ST"]
+      ];
 
-  function startMatch() {
-    field.innerHTML = ""; // Vyčisti hřiště
+      const teamB = [
+        ["A", "GK"],
+        ["B", "LB"], ["C", "CB1"], ["D", "CB2"], ["E", "RB"],
+        ["F", "CDM"], ["G", "CM"],
+        ["H", "LW"], ["I", "RW"], ["J", "ST"]
+      ];
 
-    // Získání jmen hráčů
-    const team1Players = Array.from(document.querySelectorAll('#players1 input')).map(i => i.value || "T1");
-    const team2Players = Array.from(document.querySelectorAll('#players2 input')).map(i => i.value || "T2");
+      teamA.forEach(([name, pos]) => {
+        const [x, y] = positions[pos];
+        players.push(createPlayer(name, "teamA", [x - 100, y]));
+      });
 
-    // Vytvoření hráčů na hřišti
-    team1Players.forEach((name, index) => {
-      let player = document.createElement("div");
-      player.className = "player";
-      player.style.background = "blue";
-      player.innerText = name.slice(0, 2);
-      field.appendChild(player);
-      moveRandom(player, 0); // tým 1 vlevo
-    });
+      teamB.forEach(([name, pos]) => {
+        const [x, y] = positions[pos];
+        players.push(createPlayer(name, "teamB", [x + 100, 500 - y]));
+      });
 
-    team2Players.forEach((name, index) => {
-      let player = document.createElement("div");
-      player.className = "player";
-      player.style.background = "red";
-      player.innerText = name.slice(0, 2);
-      field.appendChild(player);
-      moveRandom(player, 1); // tým 2 vpravo
-    });
-  }
+      scoreA = 0;
+      scoreB = 0;
+      minutes = 0;
+      updateScoreboard();
 
-  // Funkce na náhodný pohyb hráčů
-  function moveRandom(player, side) {
-    setInterval(() => {
-      const x = Math.random() * 300 + (side === 0 ? 0 : 300);
-      const y = Math.random() * 380;
-      player.style.left = x + "px";
-      player.style.top = y + "px";
-    }, 1000);
-  }
-</script>
+      clearInterval(interval);
+      interval = setInterval(simulate, 100);
+    }
 
+    function updateScoreboard() {
+      scoreboard.textContent = `${scoreA} : ${scoreB} | ⏱️ ${minutes}'`;
+    }
+
+    function simulate() {
+      minutes += 1;
+      players.forEach(player => {
+        let dx = (Math.random() - 0.5) * 10;
+        let dy = (Math.random() - 0.5) * 10;
+        player.x = Math.max(0, Math.min(780, player.x + dx));
+        player.y = Math.max(0, Math.min(480, player.y + dy));
+        player.el.style.left = player.x + "px";
+        player.el.style.top = player.y + "px";
+      });
+
+      // Náhodná šance na gól
+      if (Math.random() < 0.03) {
+        if (Math.random() < 0.5) {
+          scoreA++;
+        } else {
+          scoreB++;
+        }
+        updateScoreboard();
+      }
+
+      // Konec zápasu po 90 minutách
+      if (minutes >= 90) {
+        clearInterval(interval);
+        scoreboard.textContent += " ⏹️ Konec zápasu";
+      } else {
+        updateScoreboard();
+      }
+    }
+  </script>
 </body>
 </html>
